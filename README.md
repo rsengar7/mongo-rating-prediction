@@ -1,8 +1,8 @@
-# Amazon Review Scraper & Rating Prediction
+# Amazon Games Review Scraper & Rating Prediction
 
 This project consists of two Python scripts designed to handle Amazon product reviews. The first script, AmazonReviewScraper.py, scrapes reviews from Amazon.com, while the second script, RatingPrediction.py, predicts ratings based on the collected reviews.
 
-## 1. Amazon Review Scraper
+## 1. Amazon Games Review Scraper
 ### Description:
 The AmazonReviewScraper.py script automates the process of gathering reviews from Amazon.com. It employs the Selenium WebDriver library to navigate through Amazon product pages, extract review details, and store them in a MongoDB database. The script collects information such as reviewer names, review ratings, review dates, review content, and more.
 
