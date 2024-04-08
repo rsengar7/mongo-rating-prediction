@@ -2,19 +2,17 @@ try:
     import re
     import warnings
     import pandas as pd
-    import numpy as np
-    from nltk.tokenize import word_tokenize
-    from nltk.corpus import stopwords
+    from nltk import pos_tag
+    from nltk.corpus import stopwords, wordnet
     from nltk.stem import WordNetLemmatizer
+    from nltk.tokenize import RegexpTokenizer, word_tokenize
     from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
     from sklearn.metrics import accuracy_score, confusion_matrix
     from sklearn.model_selection import train_test_split
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.naive_bayes import MultinomialNB
-    from nltk.corpus import stopwords, wordnet
-    from nltk.stem import WordNetLemmatizer
-    from nltk.tokenize import RegexpTokenizer, word_tokenize
-    from nltk import pos_tag
+    from sklearn.externals import joblib
+    
     from pymongo import MongoClient
 
     warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -71,7 +69,6 @@ class PreProcessing():
             text = self.sub(r"\’re", " are", text)
             # Replace other characters
             text = text.replace(":", " ")
-            text = text.replace("?", "")
             # Remove numbers
             text = re.sub(r'\d+', '', text)
             return text
@@ -226,6 +223,9 @@ if __name__ == "__main__":
 
     # Train classifier
     vectorizer, model = data_processor.train_classifier()
+   
+    # Save model to a file
+    joblib.dump(model, 'mnb_model.pkl')
 
     # Initialize TextProcessor
     text_processor = TextProcessor(vectorizer, model)

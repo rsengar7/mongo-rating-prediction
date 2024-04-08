@@ -1,14 +1,33 @@
-import time
-import pandas as pd
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.service import Service
+try:
+    import time
+    import warnings
+    import pandas as pd
+    from selenium import webdriver
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.chrome.options import Options
+    from webdriver_manager.chrome import ChromeDriverManager
+    from selenium.webdriver.chrome.service import Service
+    from pymongo import MongoClient
+
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+    print("All the Modules are Successfully Imported")
+except Exception as e:
+    print("Enable to import all the necessary Modules---", e)
+
+
+class MongoDBConnection():
+    """
+    Class to establish a connection to MongoDB and fetch data.
+    """
+    def __init__(self, host='localhost', port=27017, db_name=None, collection_name=None):
+        self.client = MongoClient(f'{host}:{port}')
+        self.db = self.client[db_name]
+        self.collection = self.db[collection_name]
 
 
 class AmazonReviewScraper:
-    def __init__(self):
+    def __init__(self, mongo_connection):
         # Setting up Chrome options
         self.chrome_options = Options()
         # self.chrome_options.add_argument('--headless')
@@ -20,6 +39,7 @@ class AmazonReviewScraper:
         self.service = Service(ChromeDriverManager().install())
         # Initialize WebDriver
         self.driver = webdriver.Chrome(service=self.service, options=self.chrome_options)
+        self.mongo_connection = mongo_connection
 
 
     def scrape_reviews(self):
@@ -41,6 +61,7 @@ class AmazonReviewScraper:
 
             # Loop through each product
             for j in range(1, 62):
+                review_data = {}
                 try:
                     xpath = f"/html/body/div[1]/div[1]/div[1]/div[1]/div/span[1]/div[1]/div[{j}]/div/div/span/div/div/div[1]/span/a"
                     data = self.driver.find_element(by=By.XPATH, value=xpath)
@@ -76,12 +97,14 @@ class AmazonReviewScraper:
                                         Names.append(element.find_element(by=By.CSS_SELECTOR, value="span.a-profile-name").text)
                                     except:
                                         Names.append("")
+                                    review_data['Reviewer Name'] = Names[-1]
 
                                     try:
                                         rating_element = element.find_element(by=By.CSS_SELECTOR, value="i[data-hook='review-star-rating']")
                                         Review_rating.append(rating_element.text)
                                     except:
                                         Review_rating.append("")
+                                    review_data['Review_rating'] = Review_rating[-1]
                                     
                                     try:
                                         date_element = element.find_element(by=By.CSS_SELECTOR, value="span[data-hook='review-date']")
@@ -91,11 +114,16 @@ class AmazonReviewScraper:
                                         Review_date.append("")
                                         review_location.append("")
                                     
+                                    review_data['Review_date'] = Review_date[-1]
+                                    review_data['Review Location'] = review_location[-1]
+                                    
                                     try:
                                         review_element = element.find_element(by=By.CSS_SELECTOR, value="span[data-hook='review-body']")
                                         Review.append(review_element.text)
                                     except:
                                         Review.append("")
+                                    
+                                    review_data['Review'] = Review[-1]
                                     
                                     try:
                                         url_element = element.find_element(by=By.CSS_SELECTOR, value="a.a-profile")
@@ -106,8 +134,13 @@ class AmazonReviewScraper:
                                         name_url.append("")
                                         user_id.append("")
                                     
+                                    
                                     ASIN.append(baseurl.split("/")[5])
                                     star_rating.append(number)
+                                    review_data['ASIN'] = ASIN[-1]
+                                    review_data['Rating'] = star_rating[-1]
+
+                                    self.mongo_connection.collection.insert_one(review_data)
                         except:
                             pass
                 except:
@@ -139,7 +172,9 @@ class AmazonReviewScraper:
         self.driver.quit()
 
 if __name__ == "__main__":
-    scraper = AmazonReviewScraper()
+    # Initialize MongoDB connection
+    mongo_connection = MongoDBConnection(host='localhost', port=27017, db_name='unstructured_project', collection_name='product_reviews')
+    scraper = AmazonReviewScraper(mongo_connection)
     scraped_data = scraper.scrape_reviews()
     scraper.save_to_csv(scraped_data, "amazon_reviews.csv")
     scraper.close_driver()
