@@ -12,23 +12,21 @@ from pymongo import MongoClient
 
 client = MongoClient('localhost:27017')
 db = client.unstructured_project
-collection = db.product_reviews
+collection = db.product_info
 
-# for post in collection.find():
-#     try:
-#         print(post)
-#     except:
-#         pass
-#     break
 
-df = pd.read_csv("amazon_reviews.csv")
-cols = ['ASIN', 'Reviewer Name', 'Review_rating', 'Review_date',
-       'Rating', 'Review Location', 'Review']
+df = pd.read_csv("/Users/riteshsengar/Documents/GRA/RecommendationWeb/amazon_scrap/Amazon Product Info/amazon_games_info.csv")
+print(df.head())
+
+print(df.columns)
+
+cols = ['ASIN', 'Names', 'total_reviews', 'overall_rating',
+       'game_price', 'game_size', 'developed_by', 'developer_email',
+       'release_year', 'amazon_listed_date', 'language_supported', 'Ai_Review',
+       'Ai_tags', 'product_description', 'product_features',
+       'minimum_operating', 'application_permission', 'reviews_url']
 
 df = df[cols]
-print(df.head())
-print(df.columns)
-# sys.exit()
 
 
 # Convert DataFrame to JSON
